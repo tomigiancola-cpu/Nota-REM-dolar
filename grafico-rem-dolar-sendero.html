@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REM BCRA — Sendero del tipo de cambio 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #f0f2f5; }
+  body { display: flex; flex-direction: column; align-items: center; padding: 12px; font-family: Georgia, 'Times New Roman', serif; }
+
+  .widget {
+    width: 100%; max-width: 780px;
+    background: #fff;
+    border: 1px solid #e3e3e3;
+    border-radius: 6px;
+    padding: 16px 20px;
+    color: #1a1a1a;
+  }
+
+  .whead { border-bottom: 2px solid #0a3d62; padding-bottom: 10px; margin-bottom: 14px; }
+  .wkicker { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #0a3d62; font-family: Arial, sans-serif; }
+  .wtitle { font-size: 17px; font-weight: 700; line-height: 1.2; margin-top: 4px; color: #111; }
+  .wdate  { font-size: 11px; color: #888; font-family: Arial, sans-serif; margin-top: 3px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .kpi { background: #f5f7fa; border-radius: 5px; padding: 8px 11px; }
+  .kpi-lbl { font-size: 9px; color: #6b7785; text-transform: uppercase; letter-spacing: .04em; font-family: Arial, sans-serif; font-weight: 700; }
+  .kpi-val { font-size: 15px; font-weight: 700; color: #0a3d62; line-height: 1.1; margin-top: 2px; font-family: Arial, sans-serif; }
+  .kpi-sub { font-size: 10px; margin-top: 2px; font-weight: 700; font-family: Arial, sans-serif; }
+  .down { color: #1d9e75; }
+  .neu  { color: #6b7785; }
+
+  .section-label {
+    font-size: 11px; font-family: Arial, sans-serif; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: #0a3d62; border-left: 3px solid #e6900f;
+    padding-left: 8px; margin-bottom: 10px;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .lg-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; padding: 3px 9px; border-radius: 14px;
+    border: 1px solid #dde2e8; color: #555; font-family: Arial, sans-serif;
+  }
+  .lg-line { width: 14px; border-top-width: 2.5px; border-top-style: solid; flex-shrink: 0; }
+  .lg-dash { width: 14px; border-top-width: 2px; border-top-style: dashed; flex-shrink: 0; }
+
+  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 6px; }
+  .note { font-size: 10px; color: #999; font-family: Arial, sans-serif; border-top: 1px solid #eee; padding-top: 7px; margin-top: 10px; line-height: 1.5; }
+
+  @media (max-width: 520px) {
+    .wtitle { font-size: 14px; }
+    .kpi-val { font-size: 13px; }
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .chart-wrap { height: 240px; }
+  }
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="whead">
+    <div class="wkicker">REM BCRA · Tipo de cambio — Mayo 2026</div>
+    <div class="wtitle">El mercado volvió a recortar sus expectativas para el dólar y proyecta $1.596 al cierre del año</div>
+    <div class="wdate">REM de mayo 2026, publicado el 4 de junio · Relevamiento realizado entre el 28 y 30 de mayo</div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-lbl">Top 10 · Diciembre 2026</div>
+      <div class="kpi-val">$1.596</div>
+      <div class="kpi-sub down">▼ $14,4 vs REM anterior</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Mediana · Diciembre 2026</div>
+      <div class="kpi-val">$1.658</div>
+      <div class="kpi-sub down">▼ $17,9 vs REM anterior</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Var. interanual esperada</div>
+      <div class="kpi-val">+14,5%</div>
+      <div class="kpi-sub neu">muy por debajo de inflación (30,5%)</div>
+    </div>
+  </div>
+
+  <div class="section-label">Sendero del tipo de cambio mayorista 2026 ($/USD, promedios mensuales)</div>
+
+  <div class="legend">
+    <div class="lg-item"><span class="lg-line" style="border-top-color:#1a6b3c;"></span> Datos reales (INDEC / Com. A 3500)</div>
+    <div class="lg-item"><span class="lg-line" style="border-top-color:#0a3d62;"></span> Top 10 · REM mayo 2026</div>
+    <div class="lg-item"><span class="lg-dash" style="border-top-color:#e6900f;"></span> Mediana · REM abril 2026 (anterior)</div>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="chart-tc"></canvas>
+  </div>
+
+  <div class="note">
+    Fuente: BCRA — REM.
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+/*
+  DATOS VERIFICADOS
+  -----------------
+  Tipo de cambio real (Com. A 3500, BCRA — promedios mensuales 2026):
+    Ene ~$1.396 | Feb ~$1.384 | Mar ~$1.393 | Abr ~$1.390 | May ~$1.408 | Jun* ~$1.436 (al 4/6)
+
+  Top 10 REM MAYO 2026 (nota / BCRA):
+    Jun $1.422 · Jul $1.447 · Ago $1.476 · Sep $1.516 · Oct $1.553 · Dic $1.596
+    Nov: no publicado para el Top 10 → interpolado entre Oct ($1.553) y Dic ($1.596) ≈ $1.574
+
+  Mediana REM ABRIL 2026 (verificado Perfil / Cronista / BCRA):
+    Jun $1.437 · Jul $1.460 · Ago $1.500 · Sep $1.533 · Oct $1.579 · Dic $1.658
+    Nov: no publicado → null (línea se interrumpe)
+
+  NOTA SOBRE DICIEMBRE TOP 10 vs MEDIANA:
+    La nota cita la mediana general con var. nov→dic de 3,8% (1.597→1.658).
+    Para el Top 10 el dato publicado es solo $1.596 para diciembre.
+    La aparente caída Nov ($1.574 interpolado) → Dic ($1.596) es leve suba (+1.4%),
+    coherente con un sendero de menor aceleración para el Top 10.
+*/
+
+var gridCol = 'rgba(0,0,0,0.06)';
+var tickCol = '#73726c';
+
+var labels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// Datos reales: ene–may reales, jun* parcial conectado a proyección
+var dsReal   = [1396, 1384, 1393, 1390, 1408, 1436, null, null, null, null, null, null];
+
+// Top 10 REM mayo: empieza en Jun (idx 5); Nov interpolado
+var dsTop10  = [null, null, null, null, null, 1422, 1447, 1476, 1516, 1553, 1574, 1596];
+
+// Mediana REM abril: empieza en Jun (idx 5); Nov null → corte visual
+var dsMedAbr = [null, null, null, null, null, 1437, 1460, 1500, 1533, 1579, null, 1658];
+
+new Chart(document.getElementById('chart-tc'), {
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        type: 'line',
+        label: 'Datos reales (Com. A 3500)',
+        data: dsReal,
+        borderColor: '#1a6b3c',
+        backgroundColor: '#1a6b3c',
+        borderWidth: 2.8,
+        tension: 0.2,
+        pointRadius: 4,
+        pointBackgroundColor: '#1a6b3c',
+        pointHoverRadius: 6,
+        spanGaps: false,
+        order: 1
+      },
+      {
+        type: 'line',
+        label: 'Top 10 · REM mayo 2026',
+        data: dsTop10,
+        borderColor: '#0a3d62',
+        backgroundColor: '#0a3d62',
+        borderWidth: 2.5,
+        tension: 0.2,
+        pointRadius: 4,
+        pointBackgroundColor: '#0a3d62',
+        pointHoverRadius: 6,
+        spanGaps: false,
+        order: 2
+      },
+      {
+        type: 'line',
+        label: 'Mediana · REM abril 2026 (anterior)',
+        data: dsMedAbr,
+        borderColor: '#e6900f',
+        backgroundColor: '#e6900f',
+        borderWidth: 2,
+        tension: 0.2,
+        pointRadius: 3,
+        pointBackgroundColor: '#e6900f',
+        pointHoverRadius: 5,
+        spanGaps: false,
+        order: 3,
+        borderDash: [6, 4]
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#fff', titleColor: '#111', bodyColor: '#444',
+        borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 10,
+        cornerRadius: 6, boxPadding: 4,
+        titleFont: { family: 'Arial' }, bodyFont: { family: 'Arial' },
+        callbacks: {
+          label: function(c) {
+            if (c.parsed.y == null) return null;
+            var suffix = (c.dataset.label.includes('Top 10') && c.label === 'Nov') ? ' (interpolado)' : '';
+            return ' ' + c.dataset.label + ': $' + Math.round(c.parsed.y).toLocaleString('es-AR') + suffix;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: tickCol, font: { size: 11, family: 'Arial' } }
+      },
+      y: {
+        grid: { color: gridCol },
+        border: { display: false },
+        min: 1300,
+        ticks: {
+          color: tickCol,
+          font: { size: 11, family: 'Arial' },
+          callback: function(v) { return '$' + Math.round(v).toLocaleString('es-AR'); }
+        },
+        title: { display: true, text: 'Tipo de cambio mayorista ($/USD)', color: tickCol, font: { size: 10, family: 'Arial' } }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

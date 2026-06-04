@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REM BCRA — Devaluación vs Inflación mensual 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #f0f2f5; }
+  body { display: flex; flex-direction: column; align-items: center; padding: 12px; font-family: Georgia, 'Times New Roman', serif; }
+
+  .widget {
+    width: 100%; max-width: 780px;
+    background: #fff;
+    border: 1px solid #e3e3e3;
+    border-radius: 6px;
+    padding: 16px 20px;
+    color: #1a1a1a;
+  }
+
+  .whead { border-bottom: 2px solid #0a3d62; padding-bottom: 10px; margin-bottom: 14px; }
+  .wkicker { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #0a3d62; font-family: Arial, sans-serif; }
+  .wtitle { font-size: 17px; font-weight: 700; line-height: 1.2; margin-top: 4px; color: #111; }
+  .wdate  { font-size: 11px; color: #888; font-family: Arial, sans-serif; margin-top: 3px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .kpi { background: #f5f7fa; border-radius: 5px; padding: 8px 11px; }
+  .kpi-lbl { font-size: 9px; color: #6b7785; text-transform: uppercase; letter-spacing: .04em; font-family: Arial, sans-serif; font-weight: 700; }
+  .kpi-val { font-size: 15px; font-weight: 700; color: #0a3d62; line-height: 1.1; margin-top: 2px; font-family: Arial, sans-serif; }
+  .kpi-sub { font-size: 10px; margin-top: 2px; font-weight: 700; font-family: Arial, sans-serif; }
+  .red { color: #c0392b; }
+  .neu { color: #6b7785; }
+
+  .section-label {
+    font-size: 11px; font-family: Arial, sans-serif; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: #0a3d62; border-left: 3px solid #e6900f;
+    padding-left: 8px; margin-bottom: 10px;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .lg-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; padding: 3px 9px; border-radius: 14px;
+    border: 1px solid #dde2e8; color: #555; font-family: Arial, sans-serif;
+  }
+  .lg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .chart-wrap { position: relative; width: 100%; height: 300px; margin-bottom: 6px; }
+  .note { font-size: 10px; color: #999; font-family: Arial, sans-serif; border-top: 1px solid #eee; padding-top: 7px; margin-top: 10px; line-height: 1.5; }
+
+  @media (max-width: 520px) {
+    .wtitle { font-size: 14px; }
+    .kpi-val { font-size: 13px; }
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .chart-wrap { height: 240px; }
+  }
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="whead">
+    <div class="wkicker">REM BCRA · Devaluación vs Inflación — Mayo 2026</div>
+    <div class="wtitle">El dólar seguiría corriendo por debajo de la inflación casi todo el año, con aceleración en el tramo final</div>
+    <div class="wdate">REM de mayo 2026, publicado el 4 de junio · Relevamiento realizado entre el 28 y 30 de mayo</div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="kpi-lbl">Inflación acumulada (real, ene–abr)</div>
+      <div class="kpi-val">12,3%</div>
+      <div class="kpi-sub neu">Dato oficial INDEC</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Inflación anual 2026 (REM)</div>
+      <div class="kpi-val">30,5%</div>
+      <div class="kpi-sub neu">Sin cambios vs REM anterior</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Var. anual dólar 2026 (Top 10)</div>
+      <div class="kpi-val">+14,5%</div>
+      <div class="kpi-sub neu">vs 30,5% de inflación anual</div>
+    </div>
+  </div>
+
+  <div class="section-label">Variación mensual esperada: devaluación (Top 10) vs inflación — Jun a Dic 2026 (%)</div>
+
+  <div class="legend">
+    <div class="lg-item"><span class="lg-dot" style="background:#0a3d62;"></span> Devaluación mensual implícita (Top 10)</div>
+    <div class="lg-item"><span class="lg-dot" style="background:#e6900f;"></span> Inflación mensual esperada (mediana REM)</div>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="chart-bars"></canvas>
+  </div>
+
+  <div class="note">
+    Fuente: BCRA — REM e INDEC.
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+/*
+  METODOLOGÍA DICIEMBRE INFLACIÓN
+  --------------------------------
+  Datos reales INDEC 2026: Ene 2,9% · Feb 2,9% · Mar 3,4% · Abr 2,6%
+  Acumulado real ene-abr: 1.029 × 1.029 × 1.034 × 1.026 = 1.1233 (+12,33%)
+
+  Proyecciones REM mayo (mediana): May 2,3% · Jun 2,1% · Jul 2,0% · Ago 1,8% · Sep 1,9% · Oct 1,8% · Nov 1,7%
+  Acumulado proyectado ene-nov: 1.1233 × 1.023 × 1.021 × 1.020 × 1.018 × 1.019 × 1.018 × 1.017 = 1.2853 (+28,53%)
+
+  Meta anual REM mayo: 30,5% → 1.305
+  Diciembre implícito: 1.305 / 1.2853 = 1.0154 → 1,54%
+
+  DEVALUACIÓN MENSUAL IMPLÍCITA (Top 10)
+  ----------------------------------------
+  Base: mayo real $1.408
+  Jun: 1422/1408 - 1 = 0,994% ≈ 1,0%
+  Jul: 1447/1422 - 1 = 1,758% ≈ 1,8%
+  Ago: 1476/1447 - 1 = 2,005% ≈ 2,0%
+  Sep: 1516/1476 - 1 = 2,710% ≈ 2,7%
+  Oct: 1553/1516 - 1 = 2,441% ≈ 2,4%
+  Nov: 1574/1553 - 1 = 1,352% ≈ 1,4% (Nov interpolado)
+  Dic: 1596/1574 - 1 = 1,398% ≈ 1,4%
+*/
+
+var gridCol = 'rgba(0,0,0,0.06)';
+var tickCol = '#73726c';
+
+var labels = ['Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// Devaluación mensual implícita del Top 10 (calculada)
+var top10 = [1422, 1447, 1476, 1516, 1553, 1574, 1596];
+var base  = 1408;
+var deval = top10.map(function(v, i) {
+  var prev = i === 0 ? base : top10[i - 1];
+  return parseFloat(((v / prev - 1) * 100).toFixed(2));
+});
+
+// Inflación mensual esperada (mediana REM mayo); dic calculado
+var infla = [2.1, 2.0, 1.8, 1.9, 1.8, 1.7, 1.54];
+
+new Chart(document.getElementById('chart-bars'), {
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Devaluación mensual implícita (Top 10)',
+        data: deval,
+        backgroundColor: '#0a3d62CC',
+        borderColor: '#0a3d62',
+        borderWidth: 0,
+        borderRadius: 4,
+        barPercentage: 0.42,
+        categoryPercentage: 0.80,
+        order: 2
+      },
+      {
+        type: 'bar',
+        label: 'Inflación mensual esperada (mediana)',
+        data: infla,
+        backgroundColor: '#e6900fCC',
+        borderColor: '#e6900f',
+        borderWidth: 0,
+        borderRadius: 4,
+        barPercentage: 0.42,
+        categoryPercentage: 0.80,
+        order: 3
+      },
+      {
+        // Línea de referencia: igualdad dólar = inflación
+        type: 'line',
+        label: 'Igualdad (referencia)',
+        data: labels.map(function(_, i) {
+          // traza la línea de inflación como referencia visual
+          return infla[i];
+        }),
+        borderColor: 'rgba(0,0,0,0)',
+        borderWidth: 0,
+        pointRadius: 0,
+        order: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#fff', titleColor: '#111', bodyColor: '#444',
+        borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 10,
+        cornerRadius: 6, boxPadding: 4,
+        titleFont: { family: 'Arial' }, bodyFont: { family: 'Arial' },
+        filter: function(item) { return item.datasetIndex < 2; },
+        callbacks: {
+          label: function(c) {
+            var suffix = '';
+            if (c.datasetIndex === 0 && c.label === 'Nov') suffix = ' (nov Top 10 interpolado)';
+            if (c.datasetIndex === 1 && c.label === 'Dic') suffix = ' (calculado de meta anual 30,5%)';
+            return ' ' + c.dataset.label + ': ' + c.parsed.y.toFixed(2) + '%' + suffix;
+          },
+          afterBody: function(items) {
+            if (!items.length) return [];
+            var i = items[0].dataIndex;
+            var diff = (deval[i] - infla[i]).toFixed(2);
+            var signo = diff >= 0 ? '+' : '';
+            return ['', ' Dif. dólar − inflación: ' + signo + diff + ' p.p.'];
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: tickCol, font: { size: 11, family: 'Arial' } }
+      },
+      y: {
+        grid: { color: gridCol },
+        border: { display: false },
+        beginAtZero: true,
+        max: 3.5,
+        ticks: {
+          color: tickCol,
+          font: { size: 11, family: 'Arial' },
+          stepSize: 0.5,
+          callback: function(v) { return v.toFixed(1) + '%'; }
+        },
+        title: { display: true, text: 'Variación mensual esperada (%)', color: tickCol, font: { size: 10, family: 'Arial' } }
+      }
+    }
+  },
+  plugins: [{
+    // Anotación visual: sombrear meses donde dólar > inflación
+    id: 'highlight',
+    afterDraw: function(chart) {
+      var ctx = chart.ctx;
+      var xScale = chart.scales.x;
+      var yScale = chart.scales.y;
+      var y0 = yScale.getPixelForValue(0);
+
+      deval.forEach(function(d, i) {
+        if (d > infla[i]) {
+          var x = xScale.getPixelForValue(i);
+          var barW = xScale.width / labels.length;
+          ctx.save();
+          ctx.fillStyle = 'rgba(192,57,43,0.06)';
+          ctx.fillRect(x - barW / 2, yScale.top, barW, yScale.bottom - yScale.top);
+          ctx.restore();
+        }
+      });
+
+      // Etiqueta "Dólar > inflación" en el área sombreada
+      ctx.save();
+      ctx.font = '9px Arial';
+      ctx.fillStyle = '#c0392b';
+      ctx.textAlign = 'center';
+      deval.forEach(function(d, i) {
+        if (d > infla[i]) {
+          var x = xScale.getPixelForValue(i);
+          ctx.fillText('▲ dólar > inflación', x, yScale.top + 10);
+        }
+      });
+      ctx.restore();
+    }
+  }]
+});
+</script>
+</body>
+</html>
